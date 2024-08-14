@@ -1,0 +1,61 @@
+{
+    "schedule": [
+        {
+            "dayOfWeek": "Monday",
+            "timeSlots": [
+                {
+                    "lecture": "Math",
+                    "time": "09:00 AM"
+                },
+                {
+                    "lecture": "Science",
+                    "time": "11:00 AM"
+                }
+            ]
+        },
+        {
+            "dayOfWeek": "Tuesday",
+            "timeSlots": [
+                {
+                    "lecture": "History",
+                    "time": "10:00 AM"
+                }
+            ]
+        },
+        {
+            "dayOfWeek": "Wednesday",
+            "timeSlots": [
+                {
+                    "lecture": "English",
+                    "time": "09:30 AM"
+                },
+                {
+                    "lecture": "Physics",
+                    "time": "11:30 AM"
+                }
+            ]
+        },
+        {
+            "dayOfWeek": "Thursday",
+            "timeSlots": [
+                {
+                    "lecture": "Geography",
+                    "time": "10:30 AM"
+                }
+            ]
+        },
+        {
+            "dayOfWeek": "Friday",
+            "timeSlots": [
+                {
+                    "lecture": "Chemistry",
+                    "time": "09:45 AM"
+                },
+                {
+                    "lecture": "Biology",
+                    "time": "11:45 AM"
+                }
+            ]
+        }
+    ]
+}
