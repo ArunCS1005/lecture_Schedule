@@ -4,7 +4,8 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:lottie/lottie.dart';
 
 class Lectureloader extends StatefulWidget {
   const Lectureloader({super.key});
@@ -14,165 +15,230 @@ class Lectureloader extends StatefulWidget {
 }
 
 class _LectureloaderState extends State<Lectureloader> {
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
   String? _selectedDay = DateFormat.EEEE().format(DateTime.now());
-  bool _isEditMode = false;
-  bool _isDeleteMode = false;
 
   //Features to be added
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: fetchLectures(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data == null) {
-            return const Center(child: Text('No data available'));
-          } else {
-            final schedule = snapshot.data!['schedule'] as List<dynamic>;
-
-            final validSchedule =
-                schedule.where((day) => day['dayOfWeek'] != null).toList();
-
-            final daysOfWeek =
-                validSchedule.map((e) => e['dayOfWeek'] as String).toList();
-
-            if (_selectedDay == "Saturday" || _selectedDay == "Sunday") {
-              return noLectures();
-            }
-            final filteredSchedule = _selectedDay != null
-                ? validSchedule
-                    .where((day) => day['dayOfWeek'] == _selectedDay)
-                    .toList()
-                : validSchedule;
-
-            return Column(
-              children: [
-                DropdownButton<String>(
-                  value: _selectedDay,
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedDay = newValue;
-                    });
-                  },
-                  items:
-                      daysOfWeek.map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  underline: Container(),
-                  dropdownColor: Colors.white,
-                ),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: filteredSchedule.length,
-                    itemBuilder: (context, index) {
-                      final daySchedule = filteredSchedule[index];
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 40.0),
-                        child: Column(
-                          children: (daySchedule['timeSlots'] as List)
-                              .map<Widget>((timeSlot) {
-                            return Column(
-                              children: [
-                                Card(
-                                  margin: const EdgeInsets.symmetric(
-                                      horizontal: 30.0, vertical: 10.0),
-                                  elevation: 6,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15.0),
-                                    side: const BorderSide(
-                                      color: Colors.grey,
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: ListTile(
-                                    onTap: () {
-                                      if (_isEditMode) {
-                                        _editLecture(
-                                            _selectedDay!,
-                                            timeSlot['lecture'],
-                                            timeSlot['time'],
-                                            context);
-                                      } else if (_isDeleteMode) {
-                                        _deleteLecture(
-                                            _selectedDay!,
-                                            timeSlot['lecture'],
-                                            timeSlot['time'],
-                                            context);
-                                      }
-                                    },
-                                    title: Center(
-                                      child: Text(
-                                        timeSlot['lecture'],
-                                        style: const TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                    ),
-                                    subtitle: Center(
-                                      child: Text(
-                                        timeSlot['time'],
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: Colors.grey[700],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            );
-                          }).toList(),
+      resizeToAvoidBottomInset: true,
+      body:  FutureBuilder<Map<String, dynamic>>(
+            future: fetchLectures(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              } else if (!snapshot.hasData || snapshot.data == null) {
+                return const Center(child: Text('No data available'));
+              } else {
+                final schedule = snapshot.data!['schedule'] as List<dynamic>;
+          
+                final validSchedule =
+                    schedule.where((day) => day['dayOfWeek'] != null).toList();
+          
+                final filteredSchedule = _selectedDay != null
+                    ? validSchedule
+                        .where((day) => day['dayOfWeek'] == _selectedDay)
+                        .toList()
+                    : validSchedule;
+          
+          
+                return Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Container(
+                          height: 70,
+                          padding: const EdgeInsets.all(10.0),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(20.0),
+                            border: Border.all(
+                              color: Colors.grey,
+                              width: 2,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                                "No. of lectures: ${filteredSchedule[0]['timeSlots'].length}",
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                )),
+                          ),
                         ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            );
-          }
-        },
-      ),
-      floatingActionButton: SpeedDial(
-        animatedIcon: AnimatedIcons.menu_close,
-        animatedIconTheme: const IconThemeData(size: 22.0),
-        children: [
-          SpeedDialChild(
-            child: const Icon(Icons.add),
-            label: 'Add Lecture',
-            labelStyle: const TextStyle(fontSize: 18.0),
-            onTap: () => _showAddLectureDialog(context),
-            shape: const CircleBorder(),
+                        Container(
+                          height: 70,
+                          padding: const EdgeInsets.all(10.0),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(20.0),
+                            border: Border.all(
+                              color: Colors.grey,
+                              width: 2,
+                            ),
+                          ),
+                          child: DropdownButton<String>(
+                            padding: const EdgeInsets.all(8.0),
+                            elevation: 10,
+                            underline: Container(),
+                            value: _selectedDay,
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                _selectedDay = newValue!;
+                              });
+                            },
+                            items: <String>[
+                              'Monday',
+                              'Tuesday',
+                              'Wednesday',
+                              'Thursday',
+                              'Friday',
+                              'Saturday',
+                              'Sunday'
+                            ].map<DropdownMenuItem<String>>((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if ((_selectedDay == 'Saturday' || _selectedDay == 'Sunday') && filteredSchedule[0]['timeSlots'].isEmpty)
+                      weekend()
+                    else if (filteredSchedule[0]['timeSlots'].isEmpty)
+                      noLectures()
+                    else
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: filteredSchedule.length,
+                          itemBuilder: (context, index) {
+                            final daySchedule = filteredSchedule[index];
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 40.0),
+                              child: Column(
+                                children: (daySchedule['timeSlots'] as List)
+                                    .map<Widget>((timeSlot) {
+                                  return Column(
+                                    children: [
+                                      Card(
+                                        margin: const EdgeInsets.symmetric(
+                                            horizontal: 30.0, vertical: 10.0),
+                                        elevation: 10,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(15.0),
+                                          side: const BorderSide(
+                                            color: Colors.grey,
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: ListTile(
+                                          title: Row(
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.fromLTRB(
+                                                    15, 0, 10, 0),
+                                                child: Text(
+                                                  '${timeSlot['time']}', // Hours and Minutes
+                                                  style: const TextStyle(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.black87,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(
+                                                height:
+                                                    50, 
+                                                child: VerticalDivider(
+                                                  color: Colors.grey,
+                                                  thickness: 2,
+                                                ),
+                                              ),
+                                              // Lecture Name
+                                              Expanded(
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                          horizontal: 20.0),
+                                                  child: Text(
+                                                    timeSlot['lecture'],
+                                                    style: const TextStyle(
+                                                      fontSize: 24,
+                                                      fontWeight: FontWeight.w400,
+                                                      color: Colors.black,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          trailing: PopupMenuButton<String>(
+                                            onSelected: (String result) {
+                                              if (result == 'Edit') {
+                                                _editLecture(
+                                                    daySchedule['dayOfWeek'],
+                                                    timeSlot['lecture'],
+                                                    timeSlot['time'],
+                                                    context);
+                                              } else if (result == 'Delete') {
+                                                _deleteLecture(
+                                                    daySchedule['dayOfWeek'],
+                                                    timeSlot['lecture'],
+                                                    timeSlot['time'],
+                                                    context);
+                                              }
+                                            },
+                                            itemBuilder: (BuildContext context) =>
+                                                <PopupMenuEntry<String>>[
+                                              const PopupMenuItem<String>(
+                                                value: 'Edit',
+                                                child: Text('Edit'),
+                                              ),
+                                              const PopupMenuItem<String>(
+                                                value: 'Delete',
+                                                child: Text('Delete'),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                );
+              }
+            },
           ),
-          SpeedDialChild(
-            child: const Icon(Icons.edit),
-            label: 'Edit Lecture',
-            labelStyle: const TextStyle(fontSize: 18.0),
-            onTap: () => _isEditMode = !_isEditMode,
-            shape: const CircleBorder(),
-          ),
-          SpeedDialChild(
-            child: const Icon(Icons.delete),
-            label: 'Delete Lecture',
-            labelStyle: const TextStyle(fontSize: 18.0),
-            onTap: () => _isDeleteMode = !_isDeleteMode,
-            shape: const CircleBorder(),
-          ),
-        ],
+        
+      
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddLectureDialog(context),
+        label: const Text("Add Lecture",
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            )),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.0),
+        ),
+        elevation: 15,
+        icon: const Icon(Icons.add),
+        extendedIconLabelSpacing: 10,
       ),
     );
   }
@@ -193,7 +259,9 @@ class _LectureloaderState extends State<Lectureloader> {
           {"dayOfWeek": "Tuesday", "timeSlots": []},
           {"dayOfWeek": "Wednesday", "timeSlots": []},
           {"dayOfWeek": "Thursday", "timeSlots": []},
-          {"dayOfWeek": "Friday", "timeSlots": []}
+          {"dayOfWeek": "Friday", "timeSlots": []},
+          {"dayOfWeek": "Saturday", "timeSlots": []},
+          {"dayOfWeek": "Sunday", "timeSlots": []}
         ]
       };
       await file.writeAsString(json.encode(initialData));
@@ -205,6 +273,8 @@ class _LectureloaderState extends State<Lectureloader> {
 
   void _showAddLectureDialog(BuildContext context) {
     final _lectureController = TextEditingController();
+    final _timeController =
+        TextEditingController(); // Define _timeController variable
     TimeOfDay? _selectedTime;
 
     showDialog(
@@ -216,22 +286,30 @@ class _LectureloaderState extends State<Lectureloader> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
+                textCapitalization: TextCapitalization.words,
                 controller: _lectureController,
                 decoration: const InputDecoration(labelText: 'Lecture Name'),
               ),
               const SizedBox(height: 20),
               TextField(
-                decoration: InputDecoration(
-                  labelText: 'Time',
-                  hintText: _selectedTime?.format(context)
-                ),
+                controller:
+                    _timeController, // Assign _timeController to the TextField
                 onTap: () async {
                   _selectedTime = await showTimePicker(
                     context: context,
                     initialTime: TimeOfDay.now(),
                   );
-                  setState(() {}); // Update the UI to show the selected time
+                  if (_selectedTime != null) {
+                    setState(() {
+                      _timeController.text = _selectedTime!.format(context);
+                    });
+                  }
                 },
+                decoration: InputDecoration(
+                    labelText: 'Time',
+                    hintText: _selectedTime.toString() == 'null'
+                        ? 'Select Time'
+                        : _selectedTime.toString()),
               ),
             ],
           ),
@@ -303,13 +381,13 @@ class _LectureloaderState extends State<Lectureloader> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Edit Lecture'),
+          title: const Text('Edit Lecture'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: _lectureController,
-                decoration: InputDecoration(labelText: 'Lecture'),
+                decoration: const InputDecoration(labelText: 'Lecture'),
               ),
               TextField(
                 controller: _timeController,
@@ -362,13 +440,13 @@ class _LectureloaderState extends State<Lectureloader> {
                 setState(() {});
                 Navigator.of(context).pop();
               },
-              child: Text('Save'),
+              child: const Text('Save'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
           ],
         );
@@ -382,8 +460,8 @@ class _LectureloaderState extends State<Lectureloader> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Delete Lecture'),
-          content: Text('Are you sure you want to delete this lecture?'),
+          title: const Text('Delete Lecture'),
+          content: const Text('Are you sure you want to delete this lecture?'),
           actions: [
             TextButton(
               onPressed: () async {
@@ -406,13 +484,13 @@ class _LectureloaderState extends State<Lectureloader> {
                 setState(() {});
                 Navigator.of(context).pop();
               },
-              child: Text('Delete'),
+              child: const Text('Delete'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
           ],
         );
@@ -421,14 +499,41 @@ class _LectureloaderState extends State<Lectureloader> {
   }
 
   Widget noLectures() {
-    return const Center(
-      child: Text(
-        'No lectures on Saturday and Sunday',
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
+  return Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Lottie.asset('assets/book.json'),
+        const SizedBox(height: 20),
+        const Text(
+          'Add lectures to get started',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-      ),
+      ],
+    ),
+  );
+}
+
+  Widget weekend() {
+    return Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Lottie.asset('assets/bells.json'),
+        const SizedBox(height: 20),
+        const Text(
+          'Enjoy your weekend!',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+      ],
+    ),
+  );
+  }
+
+  SnackBar showSnackbar(String s) {
+    return SnackBar(
+      content: Text(s),
+      duration: const Duration(seconds: 2),
     );
   }
 }
